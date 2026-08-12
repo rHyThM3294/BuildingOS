@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\VisitorLogResource;
 use App\Models\VisitorLog;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
@@ -30,7 +31,7 @@ class VisitorController extends Controller
             ->orderByDesc('registered_at')
             ->get();
 
-        return response()->json($visitors);
+        return VisitorLogResource::collection($visitors);
     }
 
     #[OA\Post(
@@ -68,7 +69,7 @@ class VisitorController extends Controller
             'registered_at' => now(),
         ]);
 
-        return response()->json($visitor, 201);
+        return (new VisitorLogResource($visitor))->response()->setStatusCode(201);
     }
 
     #[OA\Patch(
@@ -102,6 +103,6 @@ class VisitorController extends Controller
             'notified_at' => $validated['status'] === 'notified' ? now() : $visitor->notified_at,
         ]);
 
-        return response()->json($visitor);
+        return new VisitorLogResource($visitor);
     }
 }

@@ -22,5 +22,11 @@ export function useVisitor() {
     if (idx !== -1) visitors.value[idx] = data
   }
 
-  return { visitors, loading, fetchVisitors, setStatus }
+  async function register(payload: Parameters<typeof visitorService.register>[0]) {
+    const { data } = await visitorService.register(payload)
+    visitors.value = [data, ...visitors.value]
+    return data
+  }
+
+  return { visitors, loading, fetchVisitors, setStatus, register }
 }

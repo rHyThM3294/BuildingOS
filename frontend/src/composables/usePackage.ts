@@ -22,5 +22,11 @@ export function usePackage() {
     if (idx !== -1) packages.value[idx] = data
   }
 
-  return { packages, loading, fetchPackages, collect }
+  async function register(payload: Parameters<typeof packageService.register>[0]) {
+    const { data } = await packageService.register(payload)
+    packages.value = [data, ...packages.value]
+    return data
+  }
+
+  return { packages, loading, fetchPackages, collect, register }
 }

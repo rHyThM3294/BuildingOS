@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\PackageItemResource;
 use App\Models\PackageItem;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
@@ -30,7 +31,7 @@ class PackageController extends Controller
             ->orderByDesc('arrived_at')
             ->get();
 
-        return response()->json($packages);
+        return PackageItemResource::collection($packages);
     }
 
     #[OA\Post(
@@ -71,7 +72,7 @@ class PackageController extends Controller
             'arrived_at' => now(),
         ]);
 
-        return response()->json($package, 201);
+        return (new PackageItemResource($package))->response()->setStatusCode(201);
     }
 
     #[OA\Patch(
@@ -92,6 +93,6 @@ class PackageController extends Controller
             'collected_at' => now(),
         ]);
 
-        return response()->json($package);
+        return new PackageItemResource($package);
     }
 }

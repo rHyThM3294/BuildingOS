@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ParkingLogResource;
 use App\Models\ParkingLog;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
@@ -30,7 +31,7 @@ class ParkingController extends Controller
             ->orderByDesc('recognized_at')
             ->get();
 
-        return response()->json($logs);
+        return ParkingLogResource::collection($logs);
     }
 
     #[OA\Post(
@@ -69,6 +70,6 @@ class ParkingController extends Controller
             'recognized_at' => now(),
         ]);
 
-        return response()->json($log, 201);
+        return (new ParkingLogResource($log))->response()->setStatusCode(201);
     }
 }
