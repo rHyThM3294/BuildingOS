@@ -6,7 +6,9 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
-        "php": "^8.3",
+        "php": ">=8.4",
+        "ext-pdo_sqlite": "*",
+        "ext-sqlite3": "*",
         "darkaonline/l5-swagger": "^11.1",
         "laravel/framework": "^13.17",
         "laravel/sanctum": "^4.0",
@@ -38,9 +40,7 @@
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate",
-            "@php artisan migrate --force",
-            "npm install --ignore-scripts",
-            "npm run build"
+            "@php artisan migrate --force"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",

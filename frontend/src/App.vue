@@ -1,6 +1,5 @@
 <script setup lang="ts">
 </script>
-
 <template>
   <header class="app-header">
     <RouterLink to="/" class="brand">BuildingOS</RouterLink>
