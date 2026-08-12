@@ -2,6 +2,10 @@
 
 面試作品：模擬「多套子系統整合」的智慧大樓管理平台，證明看懂並串接 Swagger/OpenAPI 的能力，涵蓋車輛門禁、包裹管理、訪客/外送到達通知三個模組。
 
+**線上 Demo**
+- 前端 (Vercel)：https://buildingos-lac.vercel.app
+- 後端 API / Swagger UI (Railway)：https://backend-production-be4a.up.railway.app/api/documentation
+
 ## 專案定位
 
 對應真實產品線的常見形態：多個子系統（門禁、通知、後台管理）透過 API 串接在一起的整合平台。這個 Demo 刻意展示兩種 Swagger 串接情境：
