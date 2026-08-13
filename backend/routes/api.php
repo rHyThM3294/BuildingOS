@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PackageController;
 use App\Http\Controllers\Api\ParkingController;
 use App\Http\Controllers\Api\VisitorController;
+use App\Http\Controllers\Api\WeatherController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -26,3 +27,6 @@ Route::post('/visitors', [VisitorController::class, 'store']);
 Route::patch('/visitors/{visitor}/status', [VisitorController::class, 'updateStatus']);
 
 Route::post('/notifications/line', [NotificationController::class, 'sendLineMessage']);
+
+Route::get('/weather/forecast', [WeatherController::class, 'forecast']);
+Route::get('/weather/alerts', [WeatherController::class, 'alerts']);

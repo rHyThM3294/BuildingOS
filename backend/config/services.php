@@ -45,4 +45,12 @@ return [
         'default_user_id' => env('LINE_DEFAULT_USER_ID'),
     ],
 
+    // 中央氣象署 (CWA) 開放資料平臺：https://opendata.cwa.gov.tw
+    // 免費會員申請金鑰：https://opendata.cwa.gov.tw/user/authkey
+    // Swagger/OpenAPI 文件：https://opendata.cwa.gov.tw/dist/opendata-swagger.html
+    'cwa' => [
+        'api_key' => env('CWA_API_KEY'),
+        'default_city' => env('CWA_DEFAULT_CITY', '臺北市'),
+    ],
+
 ];

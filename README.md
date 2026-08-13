@@ -10,7 +10,9 @@
 
 對應真實產品線的常見形態：多個子系統（門禁、通知、後台管理）透過 API 串接在一起的整合平台。這個 Demo 刻意展示兩種 Swagger 串接情境：
 
-- **串接別人寫好的 Swagger**：包裹/訪客到達的通知功能串接 [LINE Messaging API](https://github.com/line/line-openapi)（LINE Notify 已於 2025/3/31 停止服務，官方導向 Messaging API）。
+- **串接別人寫好的 Swagger**：
+  - 包裹/訪客到達的通知功能串接 [LINE Messaging API](https://github.com/line/line-openapi)（LINE Notify 已於 2025/3/31 停止服務，官方導向 Messaging API）。
+  - Dashboard 的天氣卡片串接[中央氣象署 (CWA) 開放資料平臺](https://opendata.cwa.gov.tw/dist/opendata-swagger.html)，真實政府機關的 Swagger/OpenAPI 文件，示範讀懂並串接別人（而且是完全不同組織風格）寫的 API 文件。
 - **自己設計 Swagger**：車牌辨識、包裹、進出紀錄目前沒有公開 API，因此自建 Laravel 後端，用 `darkaonline/l5-swagger`（zircote/swagger-php attributes）產生 OpenAPI 文件。
 
 ## 目錄結構
@@ -27,7 +29,7 @@ BuildingOS/
 |---|---|
 | 前端 | Vue 3 (Composition API) + Vite + TypeScript + Pinia + Vue Router + Axios |
 | 後端 | PHP 8.4 + Laravel 11 + L5-Swagger (OpenAPI 3) + SQLite |
-| 外部整合 | LINE Messaging API（push 訊息） |
+| 外部整合 | LINE Messaging API（push 訊息）、中央氣象署開放資料 API（天氣預報/特報） |
 
 ## 前端分層架構（為 App 化預留擴充）
 
@@ -61,6 +63,7 @@ frontend/src/
 | 包裹管理 | `PackageItem` | `Api/PackageController` | `GET /api/packages`、`POST /api/packages`、`PATCH /api/packages/{id}/collect` |
 | 訪客/外送 | `VisitorLog` | `Api/VisitorController` | `GET /api/visitors`、`POST /api/visitors`、`PATCH /api/visitors/{id}/status` |
 | LINE 通知轉發 | — | `Api/NotificationController` | `POST /api/notifications/line` |
+| 天氣資訊（CWA） | — | `Api/WeatherController` | `GET /api/weather/forecast`、`GET /api/weather/alerts` |
 
 車牌辨識目前以 `fake()->boolean(90)` 模擬辨識結果（90% 成功率），之後可替換為真實 AI 辨識服務，前端呼叫端完全不用改。
 
@@ -82,6 +85,8 @@ php artisan serve         # http://localhost:8000
 Swagger UI：http://localhost:8000/api/documentation
 
 若要實測 LINE 推播，於 [LINE Developers Console](https://developers.line.biz/) 建立 Messaging API channel，把 Channel Access Token 與測試用 `userId` 填入 `backend/.env` 的 `LINE_CHANNEL_ACCESS_TOKEN`、`LINE_DEFAULT_USER_ID`；未填寫時會自動略過真實推播（只寫 log），方便本機開發。
+
+若要實測天氣卡片，到[中央氣象署會員專區](https://opendata.cwa.gov.tw/user/authkey)申請免費金鑰，填入 `CWA_API_KEY`（`CWA_DEFAULT_CITY` 預設「臺北市」）。沒填的話 API 會回 503，前端會顯示「尚未設定金鑰」的提示卡片，而不是報錯或顯示假資料——這個行為在 `tests/Feature/WeatherControllerTest.php` 裡有測試覆蓋，包含用真實觀察到的 CWA 回應格式模擬的 parsing 測試（CWA 官方 Swagger UI 上的 response example 並不完整，實際欄位是逐一呼叫過 API 才確認的）。
 
 ### 前端 (Vue3 + Vite)
 

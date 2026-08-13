@@ -14,6 +14,7 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Packages', description: '包裹管理')]
 #[OA\Tag(name: 'Visitors', description: '訪客 / 外送到達通知')]
 #[OA\Tag(name: 'Notifications', description: 'LINE Messaging API 轉發')]
+#[OA\Tag(name: 'Weather', description: '中央氣象署 (CWA) 開放資料轉發：天氣預報、天氣特報')]
 abstract class Controller
 {
     //

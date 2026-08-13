@@ -12,6 +12,8 @@ import type { components } from './api.generated'
 export type ParkingLog = components['schemas']['ParkingLog']
 export type PackageItem = components['schemas']['PackageItem']
 export type VisitorLog = components['schemas']['VisitorLog']
+export type WeatherForecast = components['schemas']['WeatherForecast']
+export type WeatherAlert = components['schemas']['WeatherAlert']
 
 export type PlateRecognitionStatus = ParkingLog['status']
 export type EntryDirection = ParkingLog['direction']

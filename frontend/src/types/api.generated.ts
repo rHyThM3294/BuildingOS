@@ -142,6 +142,40 @@ export interface paths {
         patch: operations["updateVisitorStatus"];
         trace?: never;
     };
+    "/weather/forecast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 取得指定縣市的 36 小時天氣預報（轉發中央氣象署 CWA 開放資料） */
+        get: operations["getWeatherForecast"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/weather/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 取得指定縣市目前生效中的天氣特報（轉發中央氣象署 CWA 開放資料） */
+        get: operations["listWeatherAlerts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -182,6 +216,37 @@ export interface components {
             registeredAt: string;
             /** Format: date-time */
             notifiedAt: string | null;
+        };
+        WeatherAlert: {
+            /** @example 大雨 */
+            phenomena: string;
+            /** @example 特報 */
+            significance: string;
+            /** Format: date-time */
+            startTime: string;
+            /** Format: date-time */
+            endTime: string;
+        };
+        WeatherForecast: {
+            /** @example 臺北市 */
+            city: string;
+            /** @example 多雲 */
+            description: string;
+            /** @example 24 */
+            minTemp: number;
+            /** @example 31 */
+            maxTemp: number;
+            /**
+             * @description 降雨機率 (%)
+             * @example 20
+             */
+            pop: number;
+            /** @example 悶熱 */
+            comfort: string;
+            /** Format: date-time */
+            startTime: string;
+            /** Format: date-time */
+            endTime: string;
         };
     };
     responses: never;
@@ -462,6 +527,73 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["VisitorLog"];
                 };
+            };
+        };
+    };
+    getWeatherForecast: {
+        parameters: {
+            query?: {
+                /** @description 縣市名稱，例如「臺北市」，預設值可於後端設定 */
+                city?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeatherForecast"];
+                };
+            };
+            /** @description 查無此縣市的預報資料 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 後端尚未設定 CWA_API_KEY */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listWeatherAlerts: {
+        parameters: {
+            query?: {
+                /** @description 縣市名稱，例如「臺北市」，預設值可於後端設定 */
+                city?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 成功（沒有特報時回傳空陣列） */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeatherAlert"][];
+                };
+            };
+            /** @description 後端尚未設定 CWA_API_KEY */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

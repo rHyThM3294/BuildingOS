@@ -3,15 +3,18 @@ import { computed, onMounted } from 'vue'
 import { useParkingLog } from '@/composables/useParkingLog'
 import { usePackage } from '@/composables/usePackage'
 import { useVisitor } from '@/composables/useVisitor'
+import { useWeather } from '@/composables/useWeather'
 
 const { logs, fetchLogs } = useParkingLog()
 const { packages, fetchPackages } = usePackage()
 const { visitors, fetchVisitors } = useVisitor()
+const { forecast, alerts, loading: weatherLoading, notConfigured: weatherNotConfigured, error: weatherError, fetchWeather } = useWeather()
 
 onMounted(() => {
   fetchLogs()
   fetchPackages()
   fetchVisitors()
+  fetchWeather()
 })
 
 const pendingPackages = computed(() => packages.value.filter((p) => p.status !== 'collected').length)
@@ -66,6 +69,43 @@ const modules = [
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="module-arrow"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </div>
       </RouterLink>
+    </div>
+
+    <div class="weather-card card card-pad">
+      <div class="weather-header">
+        <h2>大樓所在地天氣</h2>
+        <span class="weather-source">資料來源：中央氣象署開放資料</span>
+      </div>
+
+      <div v-if="weatherLoading" class="state-block" style="padding: 24px">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>載入中…</span>
+      </div>
+
+      <div v-else-if="weatherNotConfigured" class="weather-notice">
+        尚未設定 <code>CWA_API_KEY</code>。至
+        <a href="https://opendata.cwa.gov.tw/user/authkey" target="_blank" rel="noopener">中央氣象署會員專區</a>
+        申請免費金鑰後設定於後端環境變數，即可顯示即時天氣資料。
+      </div>
+
+      <p v-else-if="weatherError" class="alert alert-danger">{{ weatherError }}</p>
+
+      <div v-else-if="forecast" class="weather-body">
+        <div class="weather-main">
+          <span class="weather-city">{{ forecast.city }}</span>
+          <span class="weather-desc">{{ forecast.description }}</span>
+          <span class="weather-temp">{{ forecast.minTemp }}° – {{ forecast.maxTemp }}°</span>
+        </div>
+        <div class="weather-meta">
+          <span>降雨機率 {{ forecast.pop }}%</span>
+          <span>體感 {{ forecast.comfort }}</span>
+        </div>
+        <div v-if="alerts.length" class="weather-alerts">
+          <span v-for="(a, i) in alerts" :key="i" class="badge badge-danger">
+            <span class="badge-dot" />{{ a.phenomena }}{{ a.significance }}
+          </span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -163,5 +203,91 @@ const modules = [
 .module-card:hover .module-arrow {
   transform: translateX(3px);
   color: var(--accent);
+}
+
+.weather-card {
+  margin-top: 16px;
+}
+
+.weather-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.weather-source {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.weather-notice {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.weather-notice code {
+  background: var(--gray-100);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.weather-notice a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+  .weather-notice code {
+    background: var(--surface-raised);
+  }
+}
+
+.weather-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.weather-main {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.weather-city {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.weather-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.weather-temp {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.weather-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.weather-alerts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 6px;
 }
 </style>
