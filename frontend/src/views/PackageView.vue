@@ -2,10 +2,36 @@
 import { onMounted, reactive, ref } from 'vue'
 import { usePackage } from '@/composables/usePackage'
 
-const { packages, loading, fetchPackages, collect, register } = usePackage()
+const { packages, loading, fetchPackages, notify, collect, register } = usePackage()
 
 const form = reactive({ trackingNo: '', recipientUnit: '', recipientName: '', courier: '' })
 const submitting = ref(false)
+const actionError = ref<string | null>(null)
+const actingId = ref<number | null>(null)
+
+async function onNotify(id: number) {
+  actionError.value = null
+  actingId.value = id
+  try {
+    await notify(id)
+  } catch {
+    actionError.value = '通知失敗，請稍後再試'
+  } finally {
+    actingId.value = null
+  }
+}
+
+async function onCollect(id: number) {
+  actionError.value = null
+  actingId.value = id
+  try {
+    await collect(id)
+  } catch {
+    actionError.value = '更新失敗，請稍後再試'
+  } finally {
+    actingId.value = null
+  }
+}
 
 async function onSubmit() {
   if (!form.trackingNo || !form.recipientUnit || !form.recipientName) return
@@ -64,6 +90,8 @@ onMounted(fetchPackages)
       </form>
     </div>
 
+    <p v-if="actionError" class="alert alert-danger" style="margin-top: 16px">{{ actionError }}</p>
+
     <div class="card" style="margin-top: 20px">
       <div v-if="loading && !packages.length" class="state-block">
         <span class="spinner" aria-hidden="true"></span>
@@ -102,7 +130,24 @@ onMounted(fetchPackages)
               </td>
               <td class="cell-muted">{{ formatTime(p.arrivedAt) }}</td>
               <td>
-                <button v-if="p.status !== 'collected'" class="btn btn-ghost btn-sm" @click="collect(p.id)">標記已領取</button>
+                <button
+                  v-if="p.status === 'pending'"
+                  class="btn btn-ghost btn-sm"
+                  :disabled="actingId === p.id"
+                  @click="onNotify(p.id)"
+                >
+                  <span v-if="actingId === p.id" class="spinner" aria-hidden="true"></span>
+                  通知住戶
+                </button>
+                <button
+                  v-else-if="p.status === 'notified'"
+                  class="btn btn-ghost btn-sm"
+                  :disabled="actingId === p.id"
+                  @click="onCollect(p.id)"
+                >
+                  <span v-if="actingId === p.id" class="spinner" aria-hidden="true"></span>
+                  標記已領取
+                </button>
               </td>
             </tr>
           </tbody>

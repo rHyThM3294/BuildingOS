@@ -16,6 +16,12 @@ export function usePackage() {
     }
   }
 
+  async function notify(id: number) {
+    const { data } = await packageService.notify(id)
+    const idx = packages.value.findIndex((p) => p.id === id)
+    if (idx !== -1) packages.value[idx] = data
+  }
+
   async function collect(id: number) {
     const { data } = await packageService.markCollected(id)
     const idx = packages.value.findIndex((p) => p.id === id)
@@ -28,5 +34,5 @@ export function usePackage() {
     return data
   }
 
-  return { packages, loading, fetchPackages, collect, register }
+  return { packages, loading, fetchPackages, notify, collect, register }
 }

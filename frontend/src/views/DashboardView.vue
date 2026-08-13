@@ -29,7 +29,7 @@ const modules = [
     name: '包裹管理',
     path: '/packages',
     desc: '登記到貨包裹，追蹤住戶領取狀態',
-    stat: computed(() => `${pendingPackages.value} 件待領取`),
+    stat: computed(() => `${pendingPackages.value} 件待處理`),
     icon: 'package',
   },
   {

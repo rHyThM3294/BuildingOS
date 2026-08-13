@@ -5,11 +5,16 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PackageItemResource;
 use App\Models\PackageItem;
+use App\Services\LineMessagingService;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
 class PackageController extends Controller
 {
+    public function __construct(private readonly LineMessagingService $line)
+    {
+    }
+
     #[OA\Get(
         path: '/packages',
         summary: '取得包裹列表',
@@ -36,7 +41,7 @@ class PackageController extends Controller
 
     #[OA\Post(
         path: '/packages',
-        summary: '登記新到貨包裹（登記後可另呼叫 /notifications/line 通知住戶）',
+        summary: '登記新到貨包裹（登記後狀態為 pending，需再呼叫 /packages/{id}/notify 通知住戶）',
         tags: ['Packages'],
         requestBody: new OA\RequestBody(
             required: true,
@@ -76,6 +81,35 @@ class PackageController extends Controller
     }
 
     #[OA\Patch(
+        path: '/packages/{package}/notify',
+        summary: '通知住戶包裹已送達（狀態 pending → notified，並透過 LINE Messaging API 推播）',
+        tags: ['Packages'],
+        parameters: [
+            new OA\Parameter(name: 'package', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: '通知成功', content: new OA\JsonContent(ref: '#/components/schemas/PackageItem')),
+            new OA\Response(response: 422, description: '包裹不是待通知狀態'),
+        ],
+    )]
+    public function notify(PackageItem $package)
+    {
+        abort_if($package->status !== 'pending', 422, '此包裹目前不是待通知狀態');
+
+        $package->update(['status' => 'notified']);
+
+        $userId = config('services.line.default_user_id');
+        if ($userId) {
+            $this->line->pushText(
+                $userId,
+                "您有一件包裹已送達管理室，請盡快領取。\n單號：{$package->tracking_no}（{$package->recipient_unit}）",
+            );
+        }
+
+        return new PackageItemResource($package);
+    }
+
+    #[OA\Patch(
         path: '/packages/{package}/collect',
         summary: '標記包裹已被領取',
         tags: ['Packages'],
@@ -84,10 +118,13 @@ class PackageController extends Controller
         ],
         responses: [
             new OA\Response(response: 200, description: '更新成功', content: new OA\JsonContent(ref: '#/components/schemas/PackageItem')),
+            new OA\Response(response: 422, description: '包裹尚未通知住戶'),
         ],
     )]
     public function collect(PackageItem $package)
     {
+        abort_if($package->status !== 'notified', 422, '包裹尚未通知住戶，請先通知');
+
         $package->update([
             'status' => 'collected',
             'collected_at' => now(),

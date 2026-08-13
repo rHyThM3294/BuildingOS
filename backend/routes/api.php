@@ -18,6 +18,7 @@ Route::post('/parking/recognize', [ParkingController::class, 'recognize']);
 
 Route::get('/packages', [PackageController::class, 'index']);
 Route::post('/packages', [PackageController::class, 'store']);
+Route::patch('/packages/{package}/notify', [PackageController::class, 'notify']);
 Route::patch('/packages/{package}/collect', [PackageController::class, 'collect']);
 
 Route::get('/visitors', [VisitorController::class, 'index']);

@@ -10,6 +10,10 @@ export const packageService = {
     return http.post<PackageItem>('/packages', payload)
   },
 
+  notify(id: number) {
+    return http.patch<PackageItem>(`/packages/${id}/notify`)
+  },
+
   markCollected(id: number) {
     return http.patch<PackageItem>(`/packages/${id}/collect`)
   },
