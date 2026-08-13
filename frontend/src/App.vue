@@ -21,7 +21,7 @@ const navItems = [
             <path d="M9 9h1M14 9h1M9 13h1M14 13h1M9 17h1M14 17h1" />
           </svg>
         </span>
-        <span>BuildingOS</span>
+        <span class="brand-text">BuildingOS</span>
       </RouterLink>
 
       <nav class="app-nav">
@@ -128,5 +128,25 @@ const navItems = [
 
 .app-main {
   flex: 1;
+}
+
+@media (max-width: 480px) {
+  .app-header-inner {
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .brand-text {
+    display: none;
+  }
+
+  .app-nav {
+    gap: 2px;
+  }
+
+  .app-nav-link {
+    padding: 7px 9px;
+    font-size: 13px;
+  }
 }
 </style>
