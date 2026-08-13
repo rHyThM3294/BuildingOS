@@ -12,6 +12,7 @@ class ParkingController extends Controller
 {
     #[OA\Get(
         path: '/parking/logs',
+        operationId: 'listParkingLogs',
         summary: '取得車輛進出紀錄',
         tags: ['Parking'],
         parameters: [
@@ -36,6 +37,7 @@ class ParkingController extends Controller
 
     #[OA\Post(
         path: '/parking/recognize',
+        operationId: 'recognizeParking',
         summary: '送入車牌號碼進行辨識並登記進出紀錄',
         tags: ['Parking'],
         requestBody: new OA\RequestBody(

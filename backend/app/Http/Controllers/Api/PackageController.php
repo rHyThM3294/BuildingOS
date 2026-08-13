@@ -17,6 +17,7 @@ class PackageController extends Controller
 
     #[OA\Get(
         path: '/packages',
+        operationId: 'listPackages',
         summary: '取得包裹列表',
         tags: ['Packages'],
         parameters: [
@@ -41,6 +42,7 @@ class PackageController extends Controller
 
     #[OA\Post(
         path: '/packages',
+        operationId: 'registerPackage',
         summary: '登記新到貨包裹（登記後狀態為 pending，需再呼叫 /packages/{id}/notify 通知住戶）',
         tags: ['Packages'],
         requestBody: new OA\RequestBody(
@@ -82,6 +84,7 @@ class PackageController extends Controller
 
     #[OA\Patch(
         path: '/packages/{package}/notify',
+        operationId: 'notifyPackage',
         summary: '通知住戶包裹已送達（狀態 pending → notified，並透過 LINE Messaging API 推播）',
         tags: ['Packages'],
         parameters: [
@@ -111,6 +114,7 @@ class PackageController extends Controller
 
     #[OA\Patch(
         path: '/packages/{package}/collect',
+        operationId: 'collectPackage',
         summary: '標記包裹已被領取',
         tags: ['Packages'],
         parameters: [

@@ -12,6 +12,7 @@ class VisitorController extends Controller
 {
     #[OA\Get(
         path: '/visitors',
+        operationId: 'listVisitors',
         summary: '取得訪客 / 外送登記列表',
         tags: ['Visitors'],
         parameters: [
@@ -36,6 +37,7 @@ class VisitorController extends Controller
 
     #[OA\Post(
         path: '/visitors',
+        operationId: 'registerVisitor',
         summary: '登記訪客或外送到達',
         tags: ['Visitors'],
         requestBody: new OA\RequestBody(
@@ -74,6 +76,7 @@ class VisitorController extends Controller
 
     #[OA\Patch(
         path: '/visitors/{visitor}/status',
+        operationId: 'updateVisitorStatus',
         summary: '更新訪客狀態（等待中 → 已通知 → 已進入 → 已離開）',
         tags: ['Visitors'],
         parameters: [

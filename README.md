@@ -89,12 +89,26 @@ Swagger UI：http://localhost:8000/api/documentation
 cd frontend
 npm install
 npm run dev                # http://localhost:5173，/api 會 proxy 到後端 :8000
-npm run gen:api-types       # 依後端 Swagger 產生 TS 型別 (openapi-typescript)
 npm run build                # 正式環境打包
 npm run build:staging        # staging 環境打包 (.env.staging)
 ```
 
 多環境設定：`.env.development` / `.env.staging` / `.env.production` 各自帶不同的 `VITE_API_BASE_URL`。
+
+### 型別是從 Swagger 規格產生的，不是手寫
+
+`frontend/src/types/models.ts` 沒有手寫任何欄位，全部 `import type { components } from './api.generated'`，而 `api.generated.ts` 是用 [openapi-typescript](https://openapi-ts.dev/) 直接讀後端 `/docs`（L5-Swagger 產生的 OpenAPI JSON）產生的。也就是說前端的型別跟 Swagger 文件是同一份來源，不會兩邊各寫一次、慢慢對不上。
+
+改 API 時的流程：
+
+```bash
+# 1. 改 backend Controller 的邏輯 / OA\* annotation
+cd backend && php artisan l5-swagger:generate   # 2. 重新產生 swagger 文件
+cd ../frontend && npm run gen:api-types          # 3. 重新產生 TS 型別
+npx vue-tsc --noEmit                             # 4. 型別對不上的地方會直接紅字
+```
+
+`api.generated.ts` 有 commit 進 repo（跟 lockfile 一樣，改了 API 就重新產生、一起 commit），這樣 clone 下來直接 `npm install && npm run build` 就能動，不用先啟動後端。
 
 ## 規劃中
 

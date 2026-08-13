@@ -15,6 +15,7 @@ class NotificationController extends Controller
 
     #[OA\Post(
         path: '/notifications/line',
+        operationId: 'sendLineMessage',
         summary: '透過 LINE Messaging API 推播訊息給住戶（包裹到貨 / 訪客到達通知）',
         tags: ['Notifications'],
         requestBody: new OA\RequestBody(

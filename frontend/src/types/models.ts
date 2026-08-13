@@ -1,48 +1,25 @@
 /**
- * 依 Swagger/OpenAPI schema 對應的網域模型型別。
- * 待後端 L5-Swagger 文件穩定後，可改用 `npm run gen:api-types`
- * (openapi-typescript) 從 swagger.json 自動產生，取代此手寫版本。
+ * 網域模型型別，直接從 Swagger/OpenAPI 規格產生的 api.generated.ts 取用，
+ * 不手寫重複定義。後端 API 變動時的流程：
+ *
+ *   1. 改 Controller 的 OA\* annotation（或 route/邏輯）
+ *   2. php artisan l5-swagger:generate   重新產生 swagger 文件
+ *   3. npm run gen:api-types             重新產生 api.generated.ts
+ *   4. tsc 若報型別錯誤，代表前端有地方還沒跟上 API 的新樣子
  */
+import type { components } from './api.generated'
 
-export type PlateRecognitionStatus = 'success' | 'failed'
-export type EntryDirection = 'in' | 'out'
+export type ParkingLog = components['schemas']['ParkingLog']
+export type PackageItem = components['schemas']['PackageItem']
+export type VisitorLog = components['schemas']['VisitorLog']
 
-export interface ParkingLog {
-  id: number
-  plateNumber: string
-  direction: EntryDirection
-  status: PlateRecognitionStatus
-  ownerName: string | null
-  recognizedAt: string // ISO datetime
-}
+export type PlateRecognitionStatus = ParkingLog['status']
+export type EntryDirection = ParkingLog['direction']
+export type PackageStatus = PackageItem['status']
+export type VisitorStatus = VisitorLog['status']
+export type VisitorType = VisitorLog['visitorType']
 
 export interface ParkingRecognizeRequest {
   plateNumber: string
   direction: EntryDirection
-}
-
-export type PackageStatus = 'pending' | 'notified' | 'collected'
-
-export interface PackageItem {
-  id: number
-  trackingNo: string
-  recipientUnit: string
-  recipientName: string
-  courier: string | null
-  status: PackageStatus
-  arrivedAt: string
-  collectedAt: string | null
-}
-
-export type VisitorStatus = 'waiting' | 'notified' | 'entered' | 'left'
-export type VisitorType = 'guest' | 'delivery'
-
-export interface VisitorLog {
-  id: number
-  visitorName: string
-  visitorType: VisitorType
-  targetUnit: string
-  status: VisitorStatus
-  registeredAt: string
-  notifiedAt: string | null
 }

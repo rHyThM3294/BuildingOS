@@ -8,7 +8,7 @@
     "build": "vue-tsc -b && vite build",
     "build:staging": "vue-tsc -b && vite build --mode staging",
     "preview": "vite preview",
-    "gen:api-types": "openapi-typescript http://localhost:8000/api/documentation.json -o src/types/api.generated.ts"
+    "gen:api-types": "openapi-typescript http://localhost:8000/docs -o src/types/api.generated.ts"
   },
   "dependencies": {
     "axios": "^1.19.0",

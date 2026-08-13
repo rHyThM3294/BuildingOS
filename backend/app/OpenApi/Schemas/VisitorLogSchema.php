@@ -6,6 +6,7 @@ use OpenApi\Attributes as OA;
 
 #[OA\Schema(
     schema: 'VisitorLog',
+    required: ['id', 'visitorName', 'visitorType', 'targetUnit', 'status', 'registeredAt', 'notifiedAt'],
     properties: [
         new OA\Property(property: 'id', type: 'integer'),
         new OA\Property(property: 'visitorName', type: 'string'),

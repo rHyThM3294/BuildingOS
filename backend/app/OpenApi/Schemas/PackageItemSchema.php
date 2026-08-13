@@ -6,6 +6,7 @@ use OpenApi\Attributes as OA;
 
 #[OA\Schema(
     schema: 'PackageItem',
+    required: ['id', 'trackingNo', 'recipientUnit', 'recipientName', 'courier', 'status', 'arrivedAt', 'collectedAt'],
     properties: [
         new OA\Property(property: 'id', type: 'integer'),
         new OA\Property(property: 'trackingNo', type: 'string'),

@@ -6,6 +6,7 @@ use OpenApi\Attributes as OA;
 
 #[OA\Schema(
     schema: 'ParkingLog',
+    required: ['id', 'plateNumber', 'direction', 'status', 'ownerName', 'recognizedAt'],
     properties: [
         new OA\Property(property: 'id', type: 'integer'),
         new OA\Property(property: 'plateNumber', type: 'string'),
