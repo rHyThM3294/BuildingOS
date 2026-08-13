@@ -94,11 +94,20 @@ Swagger UI：http://localhost:8000/api/documentation
 cd frontend
 npm install
 npm run dev                # http://localhost:5173，/api 會 proxy 到後端 :8000
+npm run test                 # Vitest 單元測試
 npm run build                # 正式環境打包
 npm run build:staging        # staging 環境打包 (.env.staging)
 ```
 
 多環境設定：`.env.development` / `.env.staging` / `.env.production` 各自帶不同的 `VITE_API_BASE_URL`。
+
+### 前端測試
+
+用 Vitest + @vue/test-utils，測試分兩層：
+
+- **services**（`src/services/*.test.ts`）：mock `http`，驗證每支 API 呼叫的 URL/參數是否正確。
+- **composables**（`src/composables/*.test.ts`）：mock service 層，驗證商業邏輯——例如 `usePackage` 的 `notify()` 只會更新對應那筆包裹的狀態、`useWeather` 在收到 503 時會走「尚未設定金鑰」的分支而不是當成一般錯誤。
+- **元件**（`src/views/PackageView.test.ts`）：mock composable，用 `@vue/test-utils` 掛載元件，驗證「待通知才顯示通知按鈕、按下去會呼叫對應函式」這種畫面狀態機邏輯。
 
 ### 型別是從 Swagger 規格產生的，不是手寫
 
