@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -8,6 +9,15 @@ const navItems = [
   { to: '/packages', label: '包裹管理' },
   { to: '/visitors', label: '訪客通知' },
 ]
+
+const menuOpen = ref(false)
+
+watch(
+  () => route.path,
+  () => {
+    menuOpen.value = false
+  },
+)
 </script>
 
 <template>
@@ -35,7 +45,35 @@ const navItems = [
           {{ item.label }}
         </RouterLink>
       </nav>
+
+      <button
+        type="button"
+        class="menu-toggle"
+        :aria-expanded="menuOpen"
+        aria-controls="app-mobile-nav"
+        :aria-label="menuOpen ? '關閉選單' : '開啟選單'"
+        @click="menuOpen = !menuOpen"
+      >
+        <svg v-if="!menuOpen" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+        <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </svg>
+      </button>
     </div>
+
+    <nav v-show="menuOpen" id="app-mobile-nav" class="mobile-nav">
+      <RouterLink
+        v-for="item in navItems"
+        :key="item.to"
+        :to="item.to"
+        class="mobile-nav-link"
+        :class="{ 'is-active': route.path === item.to }"
+      >
+        {{ item.label }}
+      </RouterLink>
+    </nav>
   </header>
 
   <main class="app-main">
@@ -91,7 +129,6 @@ const navItems = [
 .app-nav {
   display: flex;
   gap: 4px;
-  overflow-x: auto;
 }
 
 .app-nav-link {
@@ -118,35 +155,92 @@ const navItems = [
 }
 
 @media (prefers-color-scheme: dark) {
-  .app-nav-link:hover {
+  .app-nav-link:hover,
+  .mobile-nav-link:hover {
     background: var(--surface-raised);
   }
-  .app-nav-link.is-active {
+  .app-nav-link.is-active,
+  .mobile-nav-link.is-active {
     background: color-mix(in srgb, var(--accent) 16%, transparent);
   }
+}
+
+.menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-heading);
+  cursor: pointer;
+  flex: none;
+}
+
+.menu-toggle:hover {
+  background: var(--gray-100);
+}
+
+@media (prefers-color-scheme: dark) {
+  .menu-toggle:hover {
+    background: var(--surface-raised);
+  }
+}
+
+.menu-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.mobile-nav {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 16px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.mobile-nav-link {
+  padding: 11px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.mobile-nav-link:hover {
+  color: var(--text-heading);
+  background: var(--gray-100);
+}
+
+.mobile-nav-link.is-active {
+  color: var(--accent);
+  background: var(--brand-50);
 }
 
 .app-main {
   flex: 1;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .app-header-inner {
-    padding: 0 12px;
-    gap: 8px;
-  }
-
-  .brand-text {
-    display: none;
+    padding: 0 16px;
   }
 
   .app-nav {
-    gap: 2px;
+    display: none;
   }
 
-  .app-nav-link {
-    padding: 7px 9px;
-    font-size: 13px;
+  .menu-toggle {
+    display: inline-flex;
+  }
+
+  .mobile-nav {
+    display: flex;
   }
 }
 </style>
