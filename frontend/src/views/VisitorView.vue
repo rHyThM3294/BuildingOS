@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { useVisitor } from '@/composables/useVisitor'
+import StatusBadge, { type StatusBadgeEntry } from '@/components/StatusBadge.vue'
 import type { VisitorType } from '@/types/models'
 
 const { visitors, loading, fetchVisitors, setStatus, register } = useVisitor()
@@ -28,7 +29,12 @@ function formatTime(iso: string) {
   return new Date(iso).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
-const statusLabel: Record<string, string> = { waiting: '等待中', notified: '已通知', entered: '已進入', left: '已離開' }
+const statusLabel: Record<string, StatusBadgeEntry> = {
+  waiting: { label: '等待中', tone: 'warning' },
+  notified: { label: '已通知', tone: 'info' },
+  entered: { label: '已進入', tone: 'success' },
+  left: { label: '已離開', tone: 'success' },
+}
 
 onMounted(fetchVisitors)
 </script>
@@ -98,9 +104,7 @@ onMounted(fetchVisitors)
               </td>
               <td>{{ v.targetUnit }}</td>
               <td>
-                <span v-if="v.status === 'entered' || v.status === 'left'" class="badge badge-success"><span class="badge-dot" />{{ statusLabel[v.status] }}</span>
-                <span v-else-if="v.status === 'notified'" class="badge badge-info"><span class="badge-dot" />{{ statusLabel[v.status] }}</span>
-                <span v-else class="badge badge-warning"><span class="badge-dot" />{{ statusLabel[v.status] }}</span>
+                <StatusBadge :status="v.status" :label-map="statusLabel" />
               </td>
               <td class="cell-muted">{{ formatTime(v.registeredAt) }}</td>
               <td>

@@ -2,6 +2,7 @@
 import { onMounted, reactive } from 'vue'
 import { useParkingLog } from '@/composables/useParkingLog'
 import { useTdxParking } from '@/composables/useTdxParking'
+import StatusBadge, { type StatusBadgeEntry } from '@/components/StatusBadge.vue'
 import type { EntryDirection } from '@/types/models'
 
 const { logs, loading, error, fetchLogs, recognizePlate } = useParkingLog()
@@ -22,11 +23,16 @@ function formatTime(iso: string) {
   return new Date(iso).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
-const fullStatusBadge: Record<string, string> = {
-  尚有空位: 'badge-success',
-  車位將滿: 'badge-warning',
-  車位已滿: 'badge-danger',
-  過度擁擠: 'badge-danger',
+const recognitionStatusLabel: Record<string, StatusBadgeEntry> = {
+  success: { label: '成功', tone: 'success' },
+  failed: { label: '失敗', tone: 'danger' },
+}
+
+const fullStatusLabel: Record<string, StatusBadgeEntry> = {
+  尚有空位: { label: '尚有空位', tone: 'success' },
+  車位將滿: { label: '車位將滿', tone: 'warning' },
+  車位已滿: { label: '車位已滿', tone: 'danger' },
+  過度擁擠: { label: '過度擁擠', tone: 'danger' },
 }
 
 onMounted(() => {
@@ -96,8 +102,7 @@ onMounted(() => {
                 <span class="badge badge-neutral">{{ log.direction === 'in' ? '入場' : '出場' }}</span>
               </td>
               <td>
-                <span v-if="log.status === 'success'" class="badge badge-success"><span class="badge-dot" />成功</span>
-                <span v-else class="badge badge-danger"><span class="badge-dot" />失敗</span>
+                <StatusBadge :status="log.status" :label-map="recognitionStatusLabel" />
               </td>
               <td class="cell-muted">{{ log.ownerName ?? '—' }}</td>
               <td class="cell-muted">{{ formatTime(log.recognizedAt) }}</td>
@@ -152,9 +157,7 @@ onMounted(() => {
                 {{ lot.availableSpaces ?? '未回報' }}<span v-if="lot.totalSpaces"> / {{ lot.totalSpaces }}</span>
               </td>
               <td>
-                <span class="badge" :class="fullStatusBadge[lot.fullStatus] ?? 'badge-neutral'">
-                  <span class="badge-dot" />{{ lot.fullStatus }}
-                </span>
+                <StatusBadge :status="lot.fullStatus" :label-map="fullStatusLabel" />
               </td>
             </tr>
           </tbody>

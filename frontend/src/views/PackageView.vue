@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { usePackage } from '@/composables/usePackage'
+import StatusBadge, { type StatusBadgeEntry } from '@/components/StatusBadge.vue'
 
 const { packages, loading, fetchPackages, notify, collect, register } = usePackage()
 
@@ -51,7 +52,11 @@ function formatTime(iso: string) {
   return new Date(iso).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
-const statusLabel: Record<string, string> = { pending: '待通知', notified: '待領取', collected: '已領取' }
+const statusLabel: Record<string, StatusBadgeEntry> = {
+  pending: { label: '待通知', tone: 'warning' },
+  notified: { label: '待領取', tone: 'info' },
+  collected: { label: '已領取', tone: 'success' },
+}
 
 onMounted(fetchPackages)
 </script>
@@ -124,9 +129,7 @@ onMounted(fetchPackages)
               <td>{{ p.recipientName }}</td>
               <td class="cell-muted">{{ p.courier ?? '—' }}</td>
               <td>
-                <span v-if="p.status === 'collected'" class="badge badge-success"><span class="badge-dot" />{{ statusLabel[p.status] }}</span>
-                <span v-else-if="p.status === 'notified'" class="badge badge-info"><span class="badge-dot" />{{ statusLabel[p.status] }}</span>
-                <span v-else class="badge badge-warning"><span class="badge-dot" />{{ statusLabel[p.status] }}</span>
+                <StatusBadge :status="p.status" :label-map="statusLabel" />
               </td>
               <td class="cell-muted">{{ formatTime(p.arrivedAt) }}</td>
               <td>
