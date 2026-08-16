@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { weatherService } from '@/services/weather'
 import type { WeatherAlert, WeatherForecast } from '@/types/models'
+import { isHttpStatus } from '@/utils/http'
 
 export function useWeather() {
   const forecast = ref<WeatherForecast | null>(null)
@@ -21,7 +22,7 @@ export function useWeather() {
       forecast.value = forecastRes.data
       alerts.value = alertsRes.data
     } catch (e) {
-      if (isAxiosStatus(e, 503)) {
+      if (isHttpStatus(e, 503)) {
         notConfigured.value = true
       } else {
         error.value = '無法取得天氣資料'
@@ -32,8 +33,4 @@ export function useWeather() {
   }
 
   return { forecast, alerts, loading, notConfigured, error, fetchWeather }
-}
-
-function isAxiosStatus(e: unknown, status: number): boolean {
-  return typeof e === 'object' && e !== null && 'response' in e && (e as { response?: { status?: number } }).response?.status === status
 }

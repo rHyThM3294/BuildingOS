@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/line/webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 接收 LINE 官方帳號的 webhook 事件（由 LINE 平臺呼叫，不是前端呼叫）
+         * @description 需在 LINE Developers Console 的 Messaging API 設定頁把 Webhook URL 指到這支端點，並開啟「Use webhook」。請求會帶 X-Line-Signature header，本端點會用 Channel secret 驗證來源真偽後才處理事件。
+         */
+        post: operations["receiveLineWebhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/notifications/line": {
         parameters: {
             query?: never;
@@ -107,6 +127,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/parking/nearby-availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 查詢附近公共停車場即時空位（轉發交通部 TDX 開放資料，OAuth2 client_credentials） */
+        get: operations["listNearbyParkingAvailability"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/visitors": {
         parameters: {
             query?: never;
@@ -204,6 +241,22 @@ export interface components {
             /** Format: date-time */
             recognizedAt: string;
         };
+        ParkingLotAvailability: {
+            /** @example TPE_C001 */
+            id: string;
+            /** @example 市民廣場地下停車場 */
+            name: string;
+            address: string | null;
+            /** @description 目前剩餘車位；null 表示現場未回報（TDX 原始值為 -1） */
+            availableSpaces: number | null;
+            totalSpaces: number | null;
+            /** @example 營業中 */
+            serviceStatus: string;
+            /** @example 尚有空位 */
+            fullStatus: string;
+            /** Format: date-time */
+            updatedAt: string | null;
+        };
         VisitorLog: {
             id: number;
             visitorName: string;
@@ -257,6 +310,41 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    receiveLineWebhook: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description HMAC-SHA256(Channel secret, raw body) 的 base64 結果 */
+                "X-Line-Signature": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 已處理（含簽章驗證通過但沒有事件的健康檢查請求） */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 簽章驗證失敗 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 後端尚未設定 LINE_CHANNEL_SECRET */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     sendLineMessage: {
         parameters: {
             query?: never;
@@ -446,6 +534,43 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ParkingLog"];
                 };
+            };
+        };
+    };
+    listNearbyParkingAvailability: {
+        parameters: {
+            query?: {
+                /** @description 縣市（英文代碼，例如 Taipei），預設值可於後端設定 */
+                city?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ParkingLotAvailability"][];
+                };
+            };
+            /** @description 不支援的縣市代碼 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 後端尚未設定 TDX_CLIENT_ID / TDX_CLIENT_SECRET */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

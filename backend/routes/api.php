@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\LineWebhookController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PackageController;
 use App\Http\Controllers\Api\ParkingController;
+use App\Http\Controllers\Api\TdxParkingController;
 use App\Http\Controllers\Api\VisitorController;
 use App\Http\Controllers\Api\WeatherController;
 use Illuminate\Http\Request;
@@ -16,6 +18,7 @@ Route::get('/user', function (Request $request) {
 // 正式串接時應加上 ->middleware('auth:sanctum') 並要求前端帶 Bearer token。
 Route::get('/parking/logs', [ParkingController::class, 'index']);
 Route::post('/parking/recognize', [ParkingController::class, 'recognize']);
+Route::get('/parking/nearby-availability', [TdxParkingController::class, 'index']);
 
 Route::get('/packages', [PackageController::class, 'index']);
 Route::post('/packages', [PackageController::class, 'store']);
@@ -27,6 +30,7 @@ Route::post('/visitors', [VisitorController::class, 'store']);
 Route::patch('/visitors/{visitor}/status', [VisitorController::class, 'updateStatus']);
 
 Route::post('/notifications/line', [NotificationController::class, 'sendLineMessage']);
+Route::post('/line/webhook', [LineWebhookController::class, 'handle']);
 
 Route::get('/weather/forecast', [WeatherController::class, 'forecast']);
 Route::get('/weather/alerts', [WeatherController::class, 'alerts']);

@@ -43,6 +43,9 @@ return [
         // 目前先用固定測試 user id 示範單一住戶推播；正式版應在
         // 住戶資料表存各自的 LINE userId 並依 target_unit 查找。
         'default_user_id' => env('LINE_DEFAULT_USER_ID'),
+        // Webhook 簽章驗證用的 Channel secret（LINE Developers Console
+        // → Basic settings → Channel secret），跟 access token 是不同的值。
+        'channel_secret' => env('LINE_CHANNEL_SECRET'),
     ],
 
     // 中央氣象署 (CWA) 開放資料平臺：https://opendata.cwa.gov.tw
@@ -51,6 +54,15 @@ return [
     'cwa' => [
         'api_key' => env('CWA_API_KEY'),
         'default_city' => env('CWA_DEFAULT_CITY', '臺北市'),
+    ],
+
+    // 交通部運輸資料流通服務平臺 (TDX)：https://tdx.transportdata.tw
+    // 免費會員金鑰申請：https://tdx.transportdata.tw/user/dataservice/apply
+    // OAuth2 client_credentials，token 端點是 Keycloak，不是 TDX 自己的網域。
+    'tdx' => [
+        'client_id' => env('TDX_CLIENT_ID'),
+        'client_secret' => env('TDX_CLIENT_SECRET'),
+        'default_city' => env('TDX_DEFAULT_CITY', 'Taipei'),
     ],
 
 ];
