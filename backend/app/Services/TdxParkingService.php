@@ -8,11 +8,14 @@ use Illuminate\Support\Facades\Http;
  * 交通部 TDX 平臺的路外停車場即時空位。
  * OpenAPI 規格：https://tdx.transportdata.tw/api-service/swagger（停車資訊 v1）
  *
- * 兩支端點的回傳都是「包了一層的物件」，不是直接一個陣列：
- * { SrcUpdateTime, UpdateTime, AuthorityCode, Items: [...], Count }
- * 這點官方 Swagger UI 上的說明沒有講得很清楚，是直接讀 spec 的
- * schema 定義才確認的。AvailableSpaces = -1 代表「未知」，不是
- *「剩 0 位」，顯示時要特別處理，不然會誤導使用者。
+ * 兩支端點的回傳都是「包了一層的物件」，不是直接一個陣列，但陣列的
+ * key 是各自資源專屬的名稱，不是 spec schema 裡看起來共用的 Items：
+ * ParkingAvailability 端點是 `ParkingAvailabilities`，CarPark 端點
+ * 是 `CarParks`。這是拿到真實金鑰、實際呼叫過後才發現跟 OpenAPI
+ * spec 的 schema 定義兜不起來的地方——spec 只保證欄位「長什麼樣」，
+ * 不保證跟實際 serialize 出來的 key 一致，串真的 API 之前最好都
+ * 實際打一次確認。AvailableSpaces = -1 代表「未知」，不是「剩 0
+ * 位」，顯示時要特別處理，不然會誤導使用者。
  */
 class TdxParkingService
 {
@@ -42,9 +45,9 @@ class TdxParkingService
         $carParks = Http::withToken($token)
             ->get(self::BASE_URL."/v1/Parking/OffStreet/CarPark/City/{$city}", ['$format' => 'JSON']);
 
-        $carParkById = collect($this->items($carParks->json()))->keyBy('CarParkID');
+        $carParkById = collect($this->items($carParks->json(), 'CarParks'))->keyBy('CarParkID');
 
-        return collect($this->items($availability->json()))
+        return collect($this->items($availability->json(), 'ParkingAvailabilities'))
             ->map(function (array $item) use ($carParkById) {
                 $carPark = $carParkById->get($item['CarParkID'] ?? null);
                 $name = $item['CarParkName']['Zh_tw']
@@ -72,15 +75,22 @@ class TdxParkingService
     }
 
     /**
-     * TDX 的回應是 { Items: [...] } 這種包裝過的物件；防禦性地處理，
-     * 萬一哪天格式改成直接回傳陣列也不會整支噴掉。
+     * TDX 的回應是包裝過的物件，實際陣列的 key 因端點而異（不是統一
+     * 叫 Items）。$primaryKey 放實測確認過的正確 key，另外保留幾個
+     * 備援 key 名稱，避免哪天格式微調就整支噴掉。
      */
-    private function items(mixed $payload): array
+    private function items(mixed $payload, string $primaryKey): array
     {
         if (is_array($payload) && array_is_list($payload)) {
             return $payload;
         }
 
-        return $payload['Items'] ?? [];
+        foreach ([$primaryKey, 'Items'] as $key) {
+            if (isset($payload[$key])) {
+                return $payload[$key];
+            }
+        }
+
+        return [];
     }
 }

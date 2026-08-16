@@ -7,9 +7,12 @@ use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 /**
- * TDX 回應是包了一層的物件（{Items: [...]}），不是直接一個陣列，
- * AvailableSpaces = -1 代表「未知」。這兩點是直接讀 TDX 官方 OpenAPI
- * spec 的 schema 定義確認的，不是憑印象猜的。
+ * 這裡的 fixture 是實際申請到金鑰、真的呼叫過 TDX API 之後才定案的：
+ * ParkingAvailability 端點的陣列 key 是 `ParkingAvailabilities`、
+ * CarPark 端點是 `CarParks`，都不是 OpenAPI spec schema 看起來共用
+ * 的 `Items`——第一版程式碼照 spec 寫是錯的，上線後打正式金鑰才測出
+ * 來一直回空陣列，回頭查真實 response 才發現 key 名稱不一樣。
+ * AvailableSpaces = -1 代表「未知」，不是 0，這點 spec 反而是對的。
  */
 class TdxParkingControllerTest extends TestCase
 {
@@ -44,7 +47,7 @@ class TdxParkingControllerTest extends TestCase
                 'SrcUpdateTime' => '2026-08-16T10:00:00+08:00',
                 'UpdateTime' => '2026-08-16T10:00:00+08:00',
                 'AuthorityCode' => 'TCG',
-                'Items' => [
+                'ParkingAvailabilities' => [
                     [
                         'CarParkID' => 'TPE_C001',
                         'CarParkName' => ['Zh_tw' => '市民廣場地下停車場', 'En' => null],
@@ -69,7 +72,7 @@ class TdxParkingControllerTest extends TestCase
             ], 200),
             '*/CarPark/City/Taipei*' => Http::response([
                 'SrcUpdateTime' => '2026-08-16T10:00:00+08:00',
-                'Items' => [
+                'CarParks' => [
                     ['CarParkID' => 'TPE_C001', 'CarParkName' => ['Zh_tw' => '市民廣場地下停車場', 'En' => 'Civic Plaza'], 'Address' => '台北市信義區市府路1號'],
                     ['CarParkID' => 'TPE_C002', 'CarParkName' => ['Zh_tw' => '中山地下停車場', 'En' => null], 'Address' => '台北市中山區中山北路二段'],
                 ],
@@ -111,8 +114,8 @@ class TdxParkingControllerTest extends TestCase
     {
         Http::fake([
             'https://tdx.transportdata.tw/auth/*' => Http::response(['access_token' => 'cached-token', 'expires_in' => 1800], 200),
-            '*/ParkingAvailability/City/Taipei*' => Http::response(['Items' => []], 200),
-            '*/CarPark/City/Taipei*' => Http::response(['Items' => []], 200),
+            '*/ParkingAvailability/City/Taipei*' => Http::response(['ParkingAvailabilities' => []], 200),
+            '*/CarPark/City/Taipei*' => Http::response(['CarParks' => []], 200),
         ]);
 
         $this->getJson('/api/parking/nearby-availability?city=Taipei')->assertOk();
