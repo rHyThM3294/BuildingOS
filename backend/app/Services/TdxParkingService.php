@@ -35,12 +35,22 @@ class TdxParkingService
     {
     }
 
-    public function getAvailability(string $city): array
+    /**
+     * 台北市單一縣市就有超過 1000 筆停車場資料，這支 API 沒有座標可以
+     * 做「附近」的地理篩選，只能先用 $limit 控制回傳筆數，不然畫面會
+     * 被撐成一張幾萬像素高的表格。用 $top 直接請 TDX 只回傳需要的筆
+     * 數，同時也少一點資料要傳輸；合併完之後再依「有剩餘車位的排前
+     * 面、剩餘車位多的排前面」排序，示範起來比隨機切一段有意義。
+     */
+    public function getAvailability(string $city, int $limit = 20): array
     {
         $token = $this->auth->getAccessToken();
 
         $availability = Http::withToken($token)
-            ->get(self::BASE_URL."/v1/Parking/OffStreet/ParkingAvailability/City/{$city}", ['$format' => 'JSON']);
+            ->get(self::BASE_URL."/v1/Parking/OffStreet/ParkingAvailability/City/{$city}", [
+                '$format' => 'JSON',
+                '$top' => $limit,
+            ]);
 
         $carParks = Http::withToken($token)
             ->get(self::BASE_URL."/v1/Parking/OffStreet/CarPark/City/{$city}", ['$format' => 'JSON']);
@@ -70,6 +80,7 @@ class TdxParkingService
                     'updatedAt' => $item['DataCollectTime'] ?? null,
                 ];
             })
+            ->sortByDesc(fn ($lot) => $lot['availableSpaces'] ?? -1)
             ->values()
             ->all();
     }

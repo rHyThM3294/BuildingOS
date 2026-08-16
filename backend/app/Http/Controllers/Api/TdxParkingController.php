@@ -21,6 +21,7 @@ class TdxParkingController extends Controller
         tags: ['Parking'],
         parameters: [
             new OA\Parameter(name: 'city', in: 'query', description: '縣市（英文代碼，例如 Taipei），預設值可於後端設定', schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'limit', in: 'query', description: '回傳筆數上限（此 API 沒有座標可篩選「附近」，單一縣市可能有上千筆資料）', schema: new OA\Schema(type: 'integer', default: 20, maximum: 50)),
         ],
         responses: [
             new OA\Response(response: 200, description: '成功', content: new OA\JsonContent(
@@ -34,6 +35,7 @@ class TdxParkingController extends Controller
     public function index(Request $request)
     {
         $city = $request->query('city', config('services.tdx.default_city'));
+        $limit = min((int) $request->query('limit', 20), 50);
 
         abort_unless(
             in_array($city, TdxParkingService::AVAILABILITY_CITIES, true),
@@ -42,7 +44,7 @@ class TdxParkingController extends Controller
         );
 
         try {
-            $lots = $this->tdx->getAvailability($city);
+            $lots = $this->tdx->getAvailability($city, $limit);
         } catch (TdxNotConfiguredException $e) {
             return response()->json(['message' => $e->getMessage()], 503);
         }

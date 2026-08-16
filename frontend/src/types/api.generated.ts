@@ -542,6 +542,8 @@ export interface operations {
             query?: {
                 /** @description 縣市（英文代碼，例如 Taipei），預設值可於後端設定 */
                 city?: string;
+                /** @description 回傳筆數上限（此 API 沒有座標可篩選「附近」，單一縣市可能有上千筆資料） */
+                limit?: number;
             };
             header?: never;
             path?: never;

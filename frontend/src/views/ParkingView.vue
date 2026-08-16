@@ -110,7 +110,7 @@ onMounted(() => {
     <div class="page-header" style="margin-top: 40px">
       <div>
         <h2>附近公共停車場即時空位</h2>
-        <p>轉發交通部 TDX 開放資料，OAuth2 client_credentials 換發 token</p>
+        <p>轉發交通部 TDX 開放資料（OAuth2 client_credentials），依剩餘車位排序，最多顯示 20 筆</p>
       </div>
     </div>
 

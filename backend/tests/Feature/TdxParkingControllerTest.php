@@ -110,6 +110,25 @@ class TdxParkingControllerTest extends TestCase
             && $request['client_id'] === 'test-id');
     }
 
+    public function test_caps_result_count_via_top_and_defaults_to_20(): void
+    {
+        Http::fake([
+            'https://tdx.transportdata.tw/auth/*' => Http::response(['access_token' => 'tok', 'expires_in' => 1800], 200),
+            '*/ParkingAvailability/City/Taipei*' => Http::response(['ParkingAvailabilities' => []], 200),
+            '*/CarPark/City/Taipei*' => Http::response(['CarParks' => []], 200),
+        ]);
+
+        $this->getJson('/api/parking/nearby-availability?city=Taipei')->assertOk();
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/ParkingAvailability/')
+            && str_contains($request->url(), '24top=20'));
+
+        $this->getJson('/api/parking/nearby-availability?city=Taipei&limit=5')->assertOk();
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/ParkingAvailability/')
+            && str_contains($request->url(), '24top=5'));
+    }
+
     public function test_caches_the_access_token_across_requests(): void
     {
         Http::fake([
