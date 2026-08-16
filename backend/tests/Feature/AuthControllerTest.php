@@ -34,6 +34,18 @@ class AuthControllerTest extends TestCase
         $this->getJson('/api/user')->assertStatus(401);
     }
 
+    /**
+     * getJson() 自動帶 Accept: application/json，掩蓋了一個真的在正式環境
+     * 炸過的 bug：沒有那個 header 時 Laravel 的 auth middleware 會想
+     * redirect 去 route('login')，但這個純 API 專案沒有這個命名路由，
+     * 直接炸成 500 蓋掉本來該回的 401。用 get() 模擬「沒特別設定
+     * Accept header 的普通請求」（例如原始 curl）來鎖住這個修正。
+     */
+    public function test_user_endpoint_returns_401_not_500_without_a_json_accept_header(): void
+    {
+        $this->get('/api/user')->assertStatus(401);
+    }
+
     public function test_token_from_login_can_call_the_protected_user_endpoint(): void
     {
         User::factory()->create(['email' => 'demo@buildingos.test', 'password' => Hash::make('secret123'), 'name' => 'Demo']);
