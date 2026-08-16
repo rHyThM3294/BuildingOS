@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
+const auth = useAuthStore()
 
 const navItems = [
   { to: '/parking', label: '車輛門禁' },
@@ -18,6 +20,14 @@ watch(
     menuOpen.value = false
   },
 )
+
+onMounted(() => {
+  // token 可能是舊的/已被後端撤銷；驗證一次順便把使用者名稱補回來。
+  // 驗證失敗的話 401 攔截器會自動清掉 session、導去登入頁。
+  if (auth.isAuthenticated) {
+    auth.fetchCurrentUser().catch(() => {})
+  }
+})
 </script>
 
 <template>
@@ -46,6 +56,14 @@ watch(
         </RouterLink>
       </nav>
 
+      <div class="account">
+        <template v-if="auth.isAuthenticated">
+          <span class="account-name">{{ auth.user?.name ?? '已登入' }}</span>
+          <button type="button" class="btn btn-ghost btn-sm" @click="auth.logout()">登出</button>
+        </template>
+        <RouterLink v-else to="/login" class="btn btn-ghost btn-sm">登入</RouterLink>
+      </div>
+
       <button
         type="button"
         class="menu-toggle"
@@ -73,6 +91,14 @@ watch(
       >
         {{ item.label }}
       </RouterLink>
+
+      <div class="mobile-account">
+        <template v-if="auth.isAuthenticated">
+          <span class="account-name">{{ auth.user?.name ?? '已登入' }}</span>
+          <button type="button" class="btn btn-ghost btn-sm" @click="auth.logout()">登出</button>
+        </template>
+        <RouterLink v-else to="/login" class="btn btn-ghost btn-sm">登入</RouterLink>
+      </div>
     </nav>
   </header>
 
@@ -165,6 +191,28 @@ watch(
   }
 }
 
+.account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.account-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.mobile-account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 12px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
 .menu-toggle {
   display: none;
   align-items: center;
@@ -231,7 +279,8 @@ watch(
     padding: 0 16px;
   }
 
-  .app-nav {
+  .app-nav,
+  .account {
     display: none;
   }
 

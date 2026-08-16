@@ -15,6 +15,7 @@ export type VisitorLog = components['schemas']['VisitorLog']
 export type WeatherForecast = components['schemas']['WeatherForecast']
 export type WeatherAlert = components['schemas']['WeatherAlert']
 export type ParkingLotAvailability = components['schemas']['ParkingLotAvailability']
+export type User = components['schemas']['User']
 
 export type PlateRecognitionStatus = ParkingLog['status']
 export type EntryDirection = ParkingLog['direction']

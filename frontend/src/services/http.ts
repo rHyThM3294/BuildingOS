@@ -20,8 +20,27 @@ http.interceptors.request.use((config) => {
 
 http.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // TODO: 統一錯誤處理 (401 導回登入頁、跳 toast 等)
+  async (error) => {
+    if (error.response?.status === 401) {
+      // 動態 import，避免 http.ts 一載入就去拉 router/Pinia store，
+      // 造成模組初始化順序的循環依賴；這兩個只有真的 401 時才需要。
+      const [{ router }, { useAuthStore }] = await Promise.all([
+        import('@/router'),
+        import('@/stores/auth'),
+      ])
+
+      const auth = useAuthStore()
+      const wasAuthenticated = auth.isAuthenticated
+      auth.clearSession()
+
+      // 只有「原本自認為已登入，卻被判 401」才導頁——避免访客瀏覽公開頁面時
+      // 任何一支意外回 401 的請求就把人強制導去登入頁。也避免在登入頁本身
+      // 因為 /login 端點的錯誤（實際上是 422，不會走到這裡）又導一次頁。
+      if (wasAuthenticated && router.currentRoute.value.name !== 'login') {
+        router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
+      }
+    }
+
     return Promise.reject(error)
   },
 )

@@ -16,6 +16,7 @@
   - 車輛門禁頁的「附近公共停車場即時空位」串接[交通部 TDX 平臺](https://tdx.transportdata.tw/api-service/swagger)（**OAuth2 client_credentials**，要自己換 token、快取、過期前重新換發，不是單純帶一把 key），並合併兩支端點（即時空位 + 停車場metadata）成一份好讀的資料。
   - LINE Webhook（`POST /api/line/webhook`）是反過來——由 LINE 平臺主動呼叫我們，重點在**驗證來源真偽**：對 request 原始 body 做 HMAC-SHA256（key 是 Channel secret）算出簽章，跟 `X-Line-Signature` header 比對，通過才處理事件並用 replyToken 回覆。
 - **自己設計 Swagger**：車牌辨識、包裹、進出紀錄目前沒有公開 API，因此自建 Laravel 後端，用 `darkaonline/l5-swagger`（zircote/swagger-php attributes）產生 OpenAPI 文件。
+- **401 攔截器**：`services/http.ts` 的 axios response interceptor 統一處理 401——清掉本地 token、導回 `/login` 並記住原本想去的頁面（`?redirect=`），登入成功後導回去。後端搭配 Sanctum Personal Access Token，`GET /api/user` 是唯一實際掛 `auth:sanctum` 的端點，用來展示這個流程（其餘 CRUD 端點刻意保持公開，讓線上 demo 不用登入就能操作）。
 
 ## 目錄結構
 
@@ -38,13 +39,14 @@ BuildingOS/
 ```
 frontend/src/
 ├── services/       API 呼叫層，元件不直接 import axios
-│   ├── http.ts       axios instance + interceptors
+│   ├── http.ts       axios instance + interceptors（含 401 攔截器）
+│   ├── auth.ts        登入 / 登出 / 取得使用者
 │   ├── parking.ts     車輛門禁 API
 │   ├── package.ts     包裹管理 API
 │   ├── visitor.ts     訪客/外送 API
 │   └── notify.ts      LINE 通知轉發 API
 ├── composables/     商業邏輯 hook 化，UI 元件只負責畫面
-├── stores/          Pinia（全域使用者狀態等）
+├── stores/          Pinia（auth store：token/user 狀態）
 ├── platform/        平台抽象層 — 這是未來 App 化的關鍵
 │   ├── camera.ts      拍照介面；Web 版用 <input type="file" capture">，
 │   │                  未來 Capacitor 版只需新增實作，呼叫端不用改
@@ -64,6 +66,7 @@ frontend/src/
 | 車輛門禁 | `ParkingLog` | `Api/ParkingController` | `GET /api/parking/logs`、`POST /api/parking/recognize` |
 | 包裹管理 | `PackageItem` | `Api/PackageController` | `GET /api/packages`、`POST /api/packages`、`PATCH /api/packages/{id}/collect` |
 | 訪客/外送 | `VisitorLog` | `Api/VisitorController` | `GET /api/visitors`、`POST /api/visitors`、`PATCH /api/visitors/{id}/status` |
+| 登入 / 登出 | `User` | `Api/AuthController` | `POST /api/login`、`POST /api/logout`、`GET /api/user` |
 | LINE 通知轉發 | — | `Api/NotificationController` | `POST /api/notifications/line` |
 | LINE Webhook（接收） | — | `Api/LineWebhookController` | `POST /api/line/webhook` |
 | 天氣資訊（CWA） | — | `Api/WeatherController` | `GET /api/weather/forecast`、`GET /api/weather/alerts` |
@@ -96,6 +99,8 @@ Swagger UI：http://localhost:8000/api/documentation
 
 若要實測 LINE Webhook（使用者傳訊息給官方帳號會觸發），除了原本的 `LINE_CHANNEL_ACCESS_TOKEN`，還要在 `backend/.env` 填入 `LINE_CHANNEL_SECRET`（LINE Developers Console → Basic settings → Channel secret，跟 access token 是不同的值），並在 Console 的 Messaging API 設定頁把 Webhook URL 指到 `{後端網址}/api/line/webhook`、開啟「Use webhook」。可以傳「查詢包裹」或「查詢訪客」給機器人測試。
 
+登入用 Sanctum Personal Access Token（純 Bearer token，沒有用 session/cookie——前後端不同網域，避免 SPA cookie 模式要另外設定 stateful domains 的麻煩）。`php artisan db:seed --class='Database\Seeders\DemoUserSeeder'` 會用 `firstOrCreate` 冪等地建立一個固定 demo 帳號 `demo@buildingos.test` / `buildingos-demo`，可以放進部署流程每次開機都跑一次也不會重複建立；線上的 `railway.json` 已經接了這行。
+
 ### 前端 (Vue3 + Vite)
 
 ```bash
@@ -115,7 +120,8 @@ npm run build:staging        # staging 環境打包 (.env.staging)
 
 - **services**（`src/services/*.test.ts`）：mock `http`，驗證每支 API 呼叫的 URL/參數是否正確。
 - **composables**（`src/composables/*.test.ts`）：mock service 層，驗證商業邏輯——例如 `usePackage` 的 `notify()` 只會更新對應那筆包裹的狀態、`useWeather` 在收到 503 時會走「尚未設定金鑰」的分支而不是當成一般錯誤。
-- **元件**（`src/views/PackageView.test.ts`）：mock composable，用 `@vue/test-utils` 掛載元件，驗證「待通知才顯示通知按鈕、按下去會呼叫對應函式」這種畫面狀態機邏輯。
+- **元件**（`src/views/*.test.ts`）：mock composable/store，用 `@vue/test-utils` 掛載元件，驗證「待通知才顯示通知按鈕、按下去會呼叫對應函式」這種畫面狀態機邏輯。
+- **401 攔截器**（`src/services/http.test.ts`）：直接從 axios 的 `interceptors.response` 內部陣列抓出註冊的 rejected callback 來測，不用真的發網路請求——驗證「已登入時收到 401 才清 session + 導頁，未登入時收到 401 不導頁，非 401 錯誤完全不處理」三種分支。
 
 ### 型別是從 Swagger 規格產生的，不是手寫
 
@@ -134,7 +140,7 @@ npx vue-tsc --noEmit                             # 4. 型別對不上的地方�
 
 ## 規劃中
 
-- 住戶登入（Sanctum token，已安裝但尚未串接前端）
 - 住戶對應 LINE userId 的資料表（目前 Demo 用單一測試帳號）
+- 把登入狀態真正拿來保護前端路由（目前所有頁面刻意保持公開，`/user` 是唯一示範 401 流程的端點）
 - 車牌辨識串接真實 AI 服務
 - Capacitor App 化（`platform/` 已預留擴充點）
