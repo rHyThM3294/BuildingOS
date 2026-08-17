@@ -28,5 +28,10 @@ export function useVisitor() {
     return data
   }
 
-  return { visitors, loading, fetchVisitors, setStatus, register }
+  async function resetDemo() {
+    const { data } = await visitorService.resetDemo()
+    visitors.value = data
+  }
+
+  return { visitors, loading, fetchVisitors, setStatus, register, resetDemo }
 }

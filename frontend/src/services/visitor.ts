@@ -13,4 +13,8 @@ export const visitorService = {
   updateStatus(id: number, status: VisitorStatus) {
     return http.patch<VisitorLog>(`/visitors/${id}/status`, { status })
   },
+
+  resetDemo() {
+    return http.post<VisitorLog[]>('/visitors/reset-demo')
+  },
 }

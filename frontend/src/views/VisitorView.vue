@@ -1,10 +1,22 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { useVisitor } from '@/composables/useVisitor'
+import { useAuthStore } from '@/stores/auth'
 import StatusBadge, { type StatusBadgeEntry } from '@/components/StatusBadge.vue'
 import type { VisitorType } from '@/types/models'
 
-const { visitors, loading, fetchVisitors, setStatus, register } = useVisitor()
+const { visitors, loading, fetchVisitors, setStatus, register, resetDemo } = useVisitor()
+const auth = useAuthStore()
+const resetting = ref(false)
+
+async function onResetDemo() {
+  resetting.value = true
+  try {
+    await resetDemo()
+  } finally {
+    resetting.value = false
+  }
+}
 
 const form = reactive<{ visitorName: string; visitorType: VisitorType; targetUnit: string }>({
   visitorName: '',
@@ -46,6 +58,16 @@ onMounted(fetchVisitors)
         <h1>訪客 / 外送到達通知</h1>
         <p>登記訪客或外送到達，通知住戶並追蹤狀態流轉</p>
       </div>
+      <button
+        v-if="auth.isAuthenticated"
+        class="btn btn-ghost btn-sm"
+        :disabled="resetting"
+        title="把示範資料的狀態隨機打散，僅供 Demo 用"
+        @click="onResetDemo"
+      >
+        <span v-if="resetting" class="spinner" aria-hidden="true"></span>
+        重置示範資料
+      </button>
     </div>
 
     <div class="card card-pad">

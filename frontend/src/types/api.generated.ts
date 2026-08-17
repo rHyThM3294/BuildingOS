@@ -230,6 +230,26 @@ export interface paths {
         patch: operations["updateVisitorStatus"];
         trace?: never;
     };
+    "/visitors/reset-demo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 重置訪客示範資料的狀態（僅供 Demo 用）
+         * @description 狀態按鈕只能往前走（等待中→已通知→已進入→已離開），示範資料被點過幾輪後會全部卡在同一個狀態。這支端點把既有的訪客紀錄隨機打散回四種狀態都有，只用來維持 Demo 畫面好看，不代表真實業務動作，因此刻意跟登入流程綁在一起（需要 Bearer token）。
+         */
+        post: operations["resetVisitorDemoStatuses"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/weather/forecast": {
         parameters: {
             query?: never;
@@ -807,6 +827,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VisitorLog"];
+                };
+            };
+        };
+    };
+    resetVisitorDemoStatuses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 重置成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitorLog"][];
                 };
             };
         };
